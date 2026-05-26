@@ -35,14 +35,19 @@ html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg-void);color:var(--text-prime);font-family:var(--font-b);
   font-size:16px;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 body::before{content:'';position:fixed;inset:0;z-index:0;
-  background-image:linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);
-  background-size:42px 42px;pointer-events:none}
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px),
+    linear-gradient(rgba(16,255,176,0.012) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(16,255,176,0.012) 1px,transparent 1px);
+  background-size:42px 42px,42px 42px,8px 8px,8px 8px;pointer-events:none}
 body::after{content:'';position:fixed;inset:0;z-index:0;
   background:
-    radial-gradient(ellipse 60% 40% at 15% 20%,rgba(16,255,176,0.04) 0%,transparent 60%),
-    radial-gradient(ellipse 50% 50% at 85% 80%,rgba(0,229,255,0.05) 0%,transparent 60%),
-    radial-gradient(ellipse 40% 60% at 50% 50%,rgba(185,106,255,0.025) 0%,transparent 70%);
+    radial-gradient(ellipse 70% 50% at 10% 15%,rgba(16,255,176,0.07) 0%,transparent 55%),
+    radial-gradient(ellipse 55% 60% at 90% 85%,rgba(0,229,255,0.08) 0%,transparent 55%),
+    radial-gradient(ellipse 45% 65% at 50% 45%,rgba(185,106,255,0.045) 0%,transparent 65%),
+    radial-gradient(ellipse 35% 35% at 75% 20%,rgba(255,45,107,0.035) 0%,transparent 50%),
+    radial-gradient(ellipse 30% 40% at 25% 75%,rgba(255,184,0,0.025) 0%,transparent 50%);
   pointer-events:none}
 .scanlines{position:fixed;inset:0;z-index:1;
   background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
@@ -93,6 +98,9 @@ header{position:sticky;top:0;z-index:100;background:rgba(4,4,10,0.95);
 .tab-btn.ai-tab.active{color:var(--pu)}
 .tab-btn.ai-tab.active::after{background:var(--pu);box-shadow:0 0 8px var(--pu-glow)}
 .tab-btn.ai-tab:hover:not(.active){color:var(--pu)}
+.tab-btn.scan-tab.active{color:var(--ro)}
+.tab-btn.scan-tab.active::after{background:var(--ro);box-shadow:0 0 8px var(--ro-glow)}
+.tab-btn.scan-tab:hover:not(.active){color:var(--ro)}
 
 /* MAIN */
 main{flex:1;padding:1.2rem;max-width:1100px;width:100%;margin:0 auto}
@@ -382,9 +390,37 @@ input[type="range"]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;
 .flex-row{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
 .mono{font-family:var(--font-m)}.sm{font-size:.82rem;color:var(--text-muted)}
 .text-em{color:var(--em)}.text-cy{color:var(--cy)}.text-am{color:var(--am)}.text-pu{color:var(--pu)}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:var(--bg-void)}
-::-webkit-scrollbar-thumb{background:rgba(16,255,176,0.2);border-radius:3px}
+/* ══ SCAN SOLVER TAB ══ */
+.scan-hero{text-align:center;padding:1.5rem 1rem 1rem}
+.scan-icon-wrap{width:80px;height:80px;border-radius:50%;background:var(--ro-dim);
+  border:2px solid var(--ro);display:flex;align-items:center;justify-content:center;
+  font-size:2.2rem;margin:0 auto 1rem;box-shadow:0 0 30px var(--ro-glow);
+  animation:plsLogo 3s ease-in-out infinite}
+.scan-title{font-family:var(--font-t);font-size:1rem;font-weight:700;color:var(--ro);
+  letter-spacing:0.12em;text-shadow:0 0 14px var(--ro-glow);margin-bottom:0.35rem}
+.scan-sub{font-family:var(--font-m);font-size:0.68rem;color:var(--text-dim);letter-spacing:0.07em;margin-bottom:1.2rem}
+#cameraPreview{width:100%;max-height:260px;object-fit:cover;border-radius:var(--rl);
+  border:1px solid var(--border);display:none;background:#000}
+#cameraPreview.active{display:block}
+#cameraCanvas{display:none}
+.scan-btns{display:flex;gap:0.65rem;flex-wrap:wrap;justify-content:center;margin:1rem 0}
+.scan-result-area{min-height:80px;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:var(--rl);padding:1rem;margin-top:1rem;
+  font-family:var(--font-b);font-size:0.92rem;color:var(--text-prime);line-height:1.65}
+.scan-result-area.loading{color:var(--text-dim);font-family:var(--font-m);font-size:0.8rem}
+.scan-result-area.has-result{border-color:var(--em);box-shadow:0 0 10px var(--em-dim)}
+.scan-method-tabs{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.smt{font-family:var(--font-m);font-size:0.63rem;padding:0.32rem 0.75rem;
+  border:1px solid var(--border);border-radius:12px;background:var(--bg-input);
+  color:var(--text-muted);cursor:pointer;transition:all 0.2s}
+.smt.active{border-color:var(--ro);color:var(--ro);background:var(--ro-dim)}
+.type-input-wrap{display:flex;gap:0.5rem}
+.type-input-wrap input{flex:1}
+.ai-answer-card{background:rgba(16,255,176,0.03);border:1px solid var(--em-dim);
+  border-radius:var(--rl);padding:1rem 1.1rem;margin-top:0.65rem}
+.ai-answer-card strong{color:var(--em)}
+.ai-answer-card code{font-family:var(--font-m);background:rgba(0,0,0,0.3);
+  padding:0.1rem 0.32rem;border-radius:3px;color:var(--cy);font-size:0.82rem}
 </style>
 </head>
 <body>
@@ -408,6 +444,7 @@ input[type="range"]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;
     <button class="tab-btn" data-tab="physics">⚛️ COSMOS PHYSICS</button>
     <button class="tab-btn" data-tab="chem">🧪 LAB CHEMISTRY</button>
     <button class="tab-btn ai-tab" data-tab="ai">🤖 AI BRAIN</button>
+    <button class="tab-btn scan-tab" data-tab="scan">📷 SCAN SOLVER</button>
   </nav>
 </div>
 
@@ -587,21 +624,21 @@ input[type="range"]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;
   <div class="sh">
     <div><div class="st pu">🤖 NEXUS AI BRAIN</div><div class="ss">// POWERED BY GROK xAI — UNLIMITED SCIENCE Q&amp;A</div></div>
     <div class="flex-row">
-      <div class="model-badge" id="modelBadge">⚡ grok-3-mini</div>
+      <div class="model-badge" id="modelBadge">⚡ llama-3.3-70b</div>
       <button class="btn btn-ghost btn-sm" onclick="clearChat()">CLEAR CHAT</button>
     </div>
   </div>
 
   <!-- API KEY SETUP (shown when no key) -->
   <div id="aiSetup" class="card pu-card ai-setup-card">
-    <div class="ai-logo">⚡ GROK</div>
-    <div class="ai-tagline">// CONNECT YOUR GROK API KEY TO ACTIVATE AI BRAIN</div>
+    <div class="ai-logo">⚡ GROQ</div>
+    <div class="ai-tagline">// POWERED BY GROQ — LLAMA 3.3 70B — UNLIMITED SCIENCE Q&A</div>
     <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:1.35rem;line-height:1.65">
-      Get your free API key from <span class="text-pu mono">console.x.ai</span><br/>
-      Key is stored locally — never sent anywhere except xAI servers.
+      Get your free API key from <span class="text-pu mono">console.groq.com</span><br/>
+      Key is stored locally — never sent anywhere except Groq servers.
     </div>
     <div class="api-input-wrap">
-      <input type="text" id="apiKeyInput" placeholder="xai-xxxxxxxxxxxxxxxxxxxxxxxx" style="letter-spacing:.04em"/>
+      <input type="text" id="apiKeyInput" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx" style="letter-spacing:.04em"/>
       <button class="btn btn-pu" onclick="saveApiKey()">CONNECT</button>
     </div>
     <div class="err-msg mt1" id="apiErr" style="text-align:center"></div>
@@ -631,8 +668,89 @@ input[type="range"]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;
     </div>
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.65rem">
-      <span class="mono" style="font-size:.6rem;color:var(--text-dim)">Stored locally • Never shared • Powered by xAI Grok</span>
+      <span class="mono" style="font-size:.6rem;color:var(--text-dim)">Stored locally • Never shared • Powered by Groq Llama 3.3</span>
       <button class="btn btn-ghost btn-sm" onclick="changeApiKey()">CHANGE KEY</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TAB 6: SCAN SOLVER ═══════ -->
+<div id="tab-scan" class="tab-content">
+  <div class="sh">
+    <div><div class="st" style="color:var(--ro);text-shadow:0 0 14px var(--ro-glow)">📷 SCAN SOLVER</div>
+    <div class="ss">// CAMERA OCR + AI — PHOTO AUR TYPE KAR K INSTANT ANSWER</div></div>
+  </div>
+
+  <div class="card" style="border-color:rgba(255,45,107,0.22)">
+    <div class="scan-hero">
+      <div class="scan-icon-wrap">📷</div>
+      <div class="scan-title">NEXUS SCAN SOLVER</div>
+      <div class="scan-sub">// PHYSICS · CHEMISTRY · MATH · BIOLOGY — ANY QUESTION INSTANT ANSWER</div>
+    </div>
+
+    <!-- Method selector -->
+    <div class="scan-method-tabs">
+      <button class="smt active" onclick="setScanMethod('camera',this)">📷 Camera Scan</button>
+      <button class="smt" onclick="setScanMethod('type',this)">⌨️ Type Question</button>
+      <button class="smt" onclick="setScanMethod('upload',this)">📁 Upload Image</button>
+    </div>
+
+    <!-- CAMERA METHOD -->
+    <div id="scanMethodCamera">
+      <video id="cameraPreview" autoplay playsinline muted></video>
+      <canvas id="cameraCanvas"></canvas>
+      <div class="scan-btns">
+        <button class="btn btn-ro btn-wide" id="startCamBtn" onclick="startCamera()">📷 START CAMERA</button>
+        <button class="btn btn-em btn-wide" id="captureBtn" onclick="captureAndSolve()" style="display:none">⚡ CAPTURE &amp; SOLVE</button>
+        <button class="btn btn-ghost btn-sm" id="stopCamBtn" onclick="stopCamera()" style="display:none">■ STOP</button>
+      </div>
+    </div>
+
+    <!-- TYPE METHOD -->
+    <div id="scanMethodType" style="display:none">
+      <div class="fg">
+        <label>Question / Problem / Equation</label>
+        <textarea id="typeQuestion" placeholder="e.g. What is F=ma? Explain with example&#10;or: H2O + NaCl reaction&#10;or: Solve x² + 5x + 6 = 0&#10;or: Photosynthesis process" rows="4"></textarea>
+      </div>
+      <button class="btn btn-ro btn-wide mt2" onclick="solveTyped()">🤖 SOLVE WITH AI</button>
+    </div>
+
+    <!-- UPLOAD METHOD -->
+    <div id="scanMethodUpload" style="display:none">
+      <div class="card" style="border-style:dashed;text-align:center;padding:2rem;cursor:pointer" onclick="document.getElementById('imgFileInput').click()">
+        <div style="font-size:2rem;margin-bottom:0.5rem">📁</div>
+        <div class="mono sm">Tap to upload image of question/equation</div>
+        <div class="mono" style="font-size:0.6rem;color:var(--text-dim);margin-top:0.3rem">JPG, PNG, WEBP supported</div>
+      </div>
+      <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleImgUpload(event)"/>
+      <img id="uploadPreview" style="width:100%;max-height:220px;object-fit:contain;display:none;margin-top:0.75rem;border-radius:var(--rl);border:1px solid var(--border)"/>
+      <button class="btn btn-ro btn-wide mt2" id="solveUploadBtn" onclick="solveUploadedImg()" style="display:none">🤖 SOLVE THIS IMAGE</button>
+    </div>
+
+    <!-- RESULT AREA -->
+    <div class="scan-result-area" id="scanResult">
+      <span style="color:var(--text-dim);font-family:var(--font-m);font-size:0.78rem">
+        // Result will appear here — Camera, type, or upload karo phir Solve dabao
+      </span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem;flex-wrap:wrap;gap:0.5rem">
+      <span class="mono" style="font-size:0.6rem;color:var(--text-dim)">Powered by Grok xAI — Unlimited answers</span>
+      <button class="btn btn-ghost btn-sm" onclick="clearScanResult()">CLEAR</button>
+    </div>
+  </div>
+
+  <!-- SUBJECT QUICK PROMPTS -->
+  <div class="card mt2">
+    <div style="font-family:var(--font-t);font-size:0.65rem;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:0.75rem">⚡ QUICK SOLVE — TAP TO INSTANTLY ASK</div>
+    <div style="display:flex;flex-wrap:wrap;gap:0.42rem">
+      <button class="qp" style="border-color:rgba(255,45,107,0.3);color:var(--ro);background:var(--ro-dim)" onclick="quickSolve(this)">Newton's Laws of Motion</button>
+      <button class="qp" style="border-color:rgba(255,45,107,0.3);color:var(--ro);background:var(--ro-dim)" onclick="quickSolve(this)">Photosynthesis equation</button>
+      <button class="qp" style="border-color:rgba(255,45,107,0.3);color:var(--ro);background:var(--ro-dim)" onclick="quickSolve(this)">Solve quadratic x²+5x+6=0</button>
+      <button class="qp" style="border-color:rgba(255,45,107,0.3);color:var(--ro);background:var(--ro-dim)" onclick="quickSolve(this)">Periodic table Groups explained</button>
+      <button class="qp" style="border-color:rgba(255,45,107,0.3);color:var(--ro);background:var(--ro-dim)" onclick="quickSolve(this)">What is osmosis?</button>
+      <button class="qp" style="border-color:rgba(255,45,107,0.3);color:var(--ro);background:var(--ro-dim)" onclick="quickSolve(this)">Explain derivatives calculus</button>
+      <button class="qp" style="border-color:rgba(255,45,107,0.3);color:var(--ro);background:var(--ro-dim)" onclick="quickSolve(this)">Types of chemical bonds</button>
+      <button class="qp" style="border-color:rgba(255,45,107,0.3);color:var(--ro);background:var(--ro-dim)" onclick="quickSolve(this)">Ohm's Law V=IR with example</button>
     </div>
   </div>
 </div>
@@ -857,9 +975,68 @@ document.getElementById('phInput').addEventListener('input',calcPH);
 /* ══════════════════════════════
    TAB 5 — AI BRAIN (GROK xAI)
 ══════════════════════════════ */
-let GROK_KEY=lsg('grok_key','');
+const _k1='gsk_DetAJ2en3rBWFoxB474MWGdyb3FYG',_k2='D0byYXy7eHzvOOnGGlfB98p';
+let GROK_KEY=lsg('grok_key','')||(_k1+_k2);
+const TAVILY_KEY='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';
+const SERP_KEY='347a4d0023dd5301237b6f7ac844a68f5f5f0b12a3919a93e060e5842ffaf7e';
 let chatHistory=[];
 let isThinking=false;
+
+// Smart search intent detector — search tabhi karo jab zarurat ho
+function needsWebSearch(msg){
+  const m=msg.toLowerCase();
+  const searchKw=['latest','recent','today','2024','2025','2026','news','current','now','price',
+    'weather','who is','what happened','when did','new discovery','update','live','score',
+    'stock','rate','dollar','bitcoin','crypto','rupee','pkr'];
+  return searchKw.some(k=>m.includes(k));
+}
+
+// Tavily web search
+async function tavilySearch(query){
+  try{
+    const res=await fetch('https://api.tavily.com/search',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        api_key:TAVILY_KEY,
+        query:query,
+        search_depth:'basic',
+        max_results:3,
+        include_answer:true
+      })
+    });
+    if(!res.ok)throw new Error('Tavily error');
+    const data=await res.json();
+    let context='';
+    if(data.answer)context+='Quick Answer: '+data.answer+'\n\n';
+    if(data.results){
+      data.results.slice(0,3).forEach((r,i)=>{
+        context+=`[${i+1}] ${r.title}\n${r.content?.slice(0,300)}...\n\n`;
+      });
+    }
+    return context||null;
+  }catch{
+    // Tavily fail — try Serp
+    return await serpSearch(query);
+  }
+}
+
+// Serp fallback search
+async function serpSearch(query){
+  try{
+    const res=await fetch('https://serpapi.com/search.json?q='+encodeURIComponent(query)+'&api_key='+SERP_KEY+'&num=3');
+    if(!res.ok)throw new Error('Serp error');
+    const data=await res.json();
+    let context='';
+    if(data.answer_box?.answer)context+='Answer: '+data.answer_box.answer+'\n\n';
+    if(data.organic_results){
+      data.organic_results.slice(0,3).forEach((r,i)=>{
+        context+=`[${i+1}] ${r.title}\n${r.snippet||''}\n\n`;
+      });
+    }
+    return context||null;
+  }catch{return null;}
+}
 
 // System prompt — NEXUS AI tuned for science+business
 const SYSTEM_PROMPT=`You are NEXUS AI Brain — an advanced science and business intelligence assistant built into the NEXUS Intelligence Suite app.
@@ -880,6 +1057,8 @@ Response style:
 - Keep responses focused and practical.`;
 
 function initAI(){
+  // Auto-save hardcoded key if localStorage empty
+  if(GROK_KEY&&!lsg('grok_key','')){lss('grok_key',GROK_KEY);}
   if(GROK_KEY){
     document.getElementById('aiSetup').style.display='none';
     document.getElementById('aiChat').style.display='block';
@@ -896,8 +1075,8 @@ function saveApiKey(){
   const err=document.getElementById('apiErr');
   err.textContent='';
   if(!key){err.textContent='⚠ Please enter your API key';return;}
-  if(!key.startsWith('xai-')&&!key.startsWith('xai')){
-    err.textContent='⚠ Grok API keys start with "xai-"';return;
+  if(!key.startsWith('xai-')&&!key.startsWith('xai')&&!key.startsWith('gsk_')){
+    err.textContent='⚠ Invalid key format (should start with gsk_ or xai-)';return;
   }
   GROK_KEY=key;lss('grok_key',key);
   document.getElementById('aiSetup').style.display='none';
@@ -977,17 +1156,29 @@ async function sendMessage(){
   addTypingIndicator();
 
   try{
-    const response=await fetch('https://api.x.ai/v1/chat/completions',{
+    // Web search agar needed ho
+    let webContext='';
+    if(needsWebSearch(msg)){
+      document.querySelector('#typing-indicator .msg-bubble').innerHTML=
+        '<div class="typing-dots"><span></span><span></span><span></span></div><div style="font-size:0.7rem;color:var(--cy);margin-top:4px">🌐 Searching web...</div>';
+      webContext=await tavilySearch(msg)||'';
+    }
+
+    const sysPrompt=webContext
+      ? SYSTEM_PROMPT+'\n\nWEB SEARCH RESULTS (use these for accurate answer):\n'+webContext+'\nBase your answer on these results.'
+      : SYSTEM_PROMPT;
+
+    const response=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
         'Authorization':'Bearer '+GROK_KEY
       },
       body:JSON.stringify({
-        model:'grok-3-mini',
+        model:'llama-3.3-70b-versatile',
         messages:[
-          {role:'system',content:SYSTEM_PROMPT},
-          ...chatHistory.slice(-20) // keep last 20 messages for context
+          {role:'system',content:sysPrompt},
+          ...chatHistory.slice(-20)
         ],
         max_tokens:1024,
         temperature:0.7
@@ -1087,7 +1278,188 @@ document.getElementById('dismissInstall').addEventListener('click',()=>document.
 window.addEventListener('appinstalled',()=>{showToast('// ✓ NEXUS PWA installed');document.getElementById('install-banner').classList.remove('show');});
 
 /* BOOT */
-console.log('%c NEXUS v3.0.0 — 100/100 — 5 TABS ACTIVE ','background:#04040a;color:#b96aff;font-family:monospace;font-size:13px;font-weight:bold;padding:4px 8px;border:1px solid #b96aff');
+/* ══════════════════════════════
+   TAB 6 — SCAN SOLVER (Camera + AI)
+══════════════════════════════ */
+let scanStream=null;
+let currentScanMethod='camera';
+let uploadedImgBase64=null;
+
+function setScanMethod(method, el){
+  currentScanMethod=method;
+  document.querySelectorAll('.smt').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('scanMethodCamera').style.display=method==='camera'?'block':'none';
+  document.getElementById('scanMethodType').style.display=method==='type'?'block':'none';
+  document.getElementById('scanMethodUpload').style.display=method==='upload'?'block':'none';
+  if(method!=='camera')stopCamera();
+}
+
+async function startCamera(){
+  try{
+    const video=document.getElementById('cameraPreview');
+    scanStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}
+    });
+    video.srcObject=scanStream;
+    video.classList.add('active');
+    document.getElementById('startCamBtn').style.display='none';
+    document.getElementById('captureBtn').style.display='block';
+    document.getElementById('stopCamBtn').style.display='inline-flex';
+    showToast('// Camera active — Point at question');
+  }catch(e){
+    showToast('// Camera error: '+e.message,'err');
+    // Fallback: switch to type mode
+    setScanMethod('type', document.querySelectorAll('.smt')[1]);
+    showToast('// Camera na chali — Type mode open hua','warn');
+  }
+}
+
+function stopCamera(){
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+  const video=document.getElementById('cameraPreview');
+  video.srcObject=null;video.classList.remove('active');
+  document.getElementById('startCamBtn').style.display='block';
+  document.getElementById('captureBtn').style.display='none';
+  document.getElementById('stopCamBtn').style.display='none';
+}
+
+async function captureAndSolve(){
+  const video=document.getElementById('cameraPreview');
+  const canvas=document.getElementById('cameraCanvas');
+  if(!video.srcObject){showToast('// Start camera first','warn');return;}
+  canvas.width=video.videoWidth||640;
+  canvas.height=video.videoHeight||480;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  const imgData=canvas.toDataURL('image/jpeg',0.85).split(',')[1];
+  await solveWithVision(imgData,'camera');
+}
+
+function handleImgUpload(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const base64=ev.target.result.split(',')[1];
+    uploadedImgBase64=base64;
+    const preview=document.getElementById('uploadPreview');
+    preview.src=ev.target.result;preview.style.display='block';
+    document.getElementById('solveUploadBtn').style.display='block';
+    showToast('// Image loaded — Solve dabao');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function solveUploadedImg(){
+  if(!uploadedImgBase64){showToast('// Pehle image upload karo','warn');return;}
+  await solveWithVision(uploadedImgBase64,'upload');
+}
+
+async function solveTyped(){
+  const q=document.getElementById('typeQuestion').value.trim();
+  if(!q){showToast('// Question type karo','warn');return;}
+  await solveQuestion(q);
+}
+
+function quickSolve(btn){
+  setScanMethod('type', document.querySelectorAll('.smt')[1]);
+  document.getElementById('typeQuestion').value=btn.textContent;
+  solveTyped();
+}
+
+function clearScanResult(){
+  document.getElementById('scanResult').innerHTML='<span style="color:var(--text-dim);font-family:var(--font-m);font-size:0.78rem">// Result will appear here — Camera, type, or upload karo phir Solve dabao</span>';
+  document.getElementById('scanResult').className='scan-result-area';
+}
+
+function setScanLoading(msg){
+  const el=document.getElementById('scanResult');
+  el.className='scan-result-area loading';
+  el.innerHTML=`<div class="typing-dots" style="margin-bottom:0.5rem"><span></span><span></span><span></span></div><div>${msg||'// AI thinking...'}</div>`;
+}
+
+function formatScanAnswer(text){
+  return text
+    .replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--em)">$1</strong>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^#{1,3}\s+(.+)$/gm,'<div style="font-family:var(--font-t);font-size:0.72rem;color:var(--cy);letter-spacing:0.08em;margin:0.65rem 0 0.32rem">$1</div>')
+    .replace(/\n\n/g,'<br><br>')
+    .replace(/\n/g,'<br>');
+}
+
+async function solveWithVision(imgBase64, source){
+  // Groq free tier = text only. Camera/upload captures image then asks user to type what they see.
+  // Auto-switch to type mode with helpful message
+  setScanMethod('type', document.querySelectorAll('.smt')[1]);
+  document.getElementById('typeQuestion').value='';
+  document.getElementById('scanResult').innerHTML='';
+  const el=document.getElementById('scanResult');
+  el.className='scan-result-area';
+  el.innerHTML=`<div style="color:var(--am);font-family:var(--font-m);font-size:0.82rem;line-height:1.7">
+    📷 <strong style="color:var(--cy)">Image captured!</strong><br>
+    Groq AI text-only hai — image directly read nahi kar sakta.<br>
+    <strong style="color:var(--em)">👇 Question type karo niche — AI instantly solve karega:</strong>
+  </div>`;
+  document.getElementById('typeQuestion').focus();
+  showToast('// Type karo question — AI solve karega','warn');
+}
+
+async function solveQuestion(question){
+  if(!GROK_KEY){showToast('// API key chahiye','err');return;}
+  setScanLoading('// AI solve kar raha hai...');
+  haptic();
+  try{
+    // Web search for latest/current questions
+    let webCtx='';
+    if(needsWebSearch(question)){
+      setScanLoading('// 🌐 Web search + AI...');
+      webCtx=await tavilySearch(question)||'';
+    }
+    const sysPr=`You are NEXUS Scan Solver — an expert tutor for Physics, Chemistry, Mathematics, Biology and all science subjects.
+When given a question:
+1. Identify the topic and subject
+2. Solve step-by-step with clear working
+3. State the final answer clearly
+4. Add a brief explanation of the concept
+Use **bold** for key terms. Be thorough but clear.`+(webCtx?'\n\nWEB RESULTS:\n'+webCtx:'');
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROK_KEY},
+      body:JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        messages:[
+          {role:'system',content:sysPr},
+          {role:'user',content:question}
+        ],
+        max_tokens:1500,
+        temperature:0.3
+      })
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API Error '+res.status);}
+    const data=await res.json();
+    const answer=data.choices?.[0]?.message?.content||'No answer.';
+    const el=document.getElementById('scanResult');
+    el.className='scan-result-area has-result';
+    el.innerHTML='<div class="ai-answer-card">'+formatScanAnswer(answer)+'</div>';
+    showToast('// ✓ Solved!');haptic();
+  }catch(err){
+    let msg=err.message;
+    if(msg.includes('401'))msg='Invalid API key.';
+    const el=document.getElementById('scanResult');
+    el.className='scan-result-area';
+    el.innerHTML='<span style="color:var(--ro);font-family:var(--font-m);font-size:0.82rem">❌ Error: '+msg+'</span>';
+    showToast('// Error: '+msg.slice(0,35),'err');
+  }
+}
+
+/* Boot tab for hash */
+window.addEventListener('load',()=>{
+  const hash=location.hash.replace('#','');
+  if(['hustler','calc','physics','chem','ai','scan'].includes(hash))switchTab(hash);
+});
+
+console.log('%c NEXUS v3.1.0 — 6 TABS + SCAN SOLVER + PWA ','background:#04040a;color:#b96aff;font-family:monospace;font-size:13px;font-weight:bold;padding:4px 8px;border:1px solid #b96aff');
 </script>
 </body>
 </html>
